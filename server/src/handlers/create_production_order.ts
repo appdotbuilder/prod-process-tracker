@@ -1,20 +1,32 @@
+import { db } from '../db';
+import { productionOrdersTable } from '../db/schema';
 import { type CreateProductionOrderInput, type ProductionOrder } from '../schema';
 
-export async function createProductionOrder(input: CreateProductionOrderInput): Promise<ProductionOrder> {
-    // This is a placeholder declaration! Real code should be implemented here.
-    // The goal of this handler is creating a new production order and persisting it in the database.
-    // New production orders should start in the first buffer (charging_mixing_buffer) by default.
-    return Promise.resolve({
-        id: 0, // Placeholder ID
+export const createProductionOrder = async (input: CreateProductionOrderInput): Promise<ProductionOrder> => {
+  try {
+    // Insert production order record
+    const result = await db.insert(productionOrdersTable)
+      .values({
         order_number: input.order_number,
-        location_type: 'buffer',
-        phase: null,
-        buffer_name: 'charging_mixing_buffer',
-        workcenter_id: null,
-        pan_id: null,
-        quantity: input.quantity,
-        status: 'active',
-        created_at: new Date(),
-        updated_at: new Date()
-    } as ProductionOrder);
-}
+        location_type: 'buffer', // Default to buffer
+        phase: null, // Null when in buffer
+        buffer_name: 'charging_mixing_buffer', // Start in first buffer
+        workcenter_id: null, // Not assigned to workcenter initially
+        pan_id: null, // Not assigned to pan initially
+        quantity: input.quantity.toString(), // Convert number to string for numeric column
+        status: 'active' // Default status
+      })
+      .returning()
+      .execute();
+
+    // Convert numeric fields back to numbers before returning
+    const productionOrder = result[0];
+    return {
+      ...productionOrder,
+      quantity: parseFloat(productionOrder.quantity) // Convert string back to number
+    };
+  } catch (error) {
+    console.error('Production order creation failed:', error);
+    throw error;
+  }
+};

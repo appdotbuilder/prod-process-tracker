@@ -1,13 +1,23 @@
+import { db } from '../db';
+import { workcentersTable } from '../db/schema';
 import { type CreateWorkcenterInput, type Workcenter } from '../schema';
 
-export async function createWorkcenter(input: CreateWorkcenterInput): Promise<Workcenter> {
-    // This is a placeholder declaration! Real code should be implemented here.
-    // The goal of this handler is creating a new workcenter and persisting it in the database.
-    return Promise.resolve({
-        id: 0, // Placeholder ID
+export const createWorkcenter = async (input: CreateWorkcenterInput): Promise<Workcenter> => {
+  try {
+    // Insert workcenter record
+    const result = await db.insert(workcentersTable)
+      .values({
         name: input.name,
         phase: input.phase,
-        capacity: input.capacity,
-        created_at: new Date()
-    } as Workcenter);
-}
+        capacity: input.capacity
+      })
+      .returning()
+      .execute();
+
+    const workcenter = result[0];
+    return workcenter;
+  } catch (error) {
+    console.error('Workcenter creation failed:', error);
+    throw error;
+  }
+};

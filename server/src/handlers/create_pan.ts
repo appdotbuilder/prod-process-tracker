@@ -1,13 +1,23 @@
+import { db } from '../db';
+import { pansTable } from '../db/schema';
 import { type CreatePanInput, type Pan } from '../schema';
 
-export async function createPan(input: CreatePanInput): Promise<Pan> {
-    // This is a placeholder declaration! Real code should be implemented here.
-    // The goal of this handler is creating a new pan and persisting it in the database.
-    // New pans should be available by default.
-    return Promise.resolve({
-        id: 0, // Placeholder ID
+export const createPan = async (input: CreatePanInput): Promise<Pan> => {
+  try {
+    // Insert pan record
+    const result = await db.insert(pansTable)
+      .values({
         name: input.name,
-        is_available: true,
-        created_at: new Date()
-    } as Pan);
-}
+        is_available: true // New pans are available by default
+      })
+      .returning()
+      .execute();
+
+    // Return the created pan
+    const pan = result[0];
+    return pan;
+  } catch (error) {
+    console.error('Pan creation failed:', error);
+    throw error;
+  }
+};
